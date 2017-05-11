@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html style="height: 100%;">
+<head>
+	<meta charset="utf-8">
+	<title>Cryptocurrency Price Chart</title>
+	<script src="jquery-1.10.1.min.js"></script>
+	<script src="highstock.js"></script>
+	<script src="theme.js"></script>
+	<style>
+	body {
+		font-family: "Segoe UI", Helvetica, sans-serif;
+		background: #161616;
+		margin: 0; 
+		padding: 0; 
+		height: 95%;
+		text-align: center;
+	}
+	.body, .buttons > a, .help-button {
+		color: #D6D6D6;
+	}
+	:focus {
+		outline: 0;
+	}
+	a {
+		color: #3885E2;
+	}
+	#loading, #placeholder {
+		top: 150px;
+		width: 100%;
+		position: absolute;
+	}
+	#loading {
+		display: none;
+	}
+	#ChartContainer {
+		height: 100%;
+	}
+	.top {
+		margin-top: 8px;
+	}
+	.buttons {
+		display: inline-block;
+	}
+	.buttons > a, .help-button {
+		display: inline-block;
+		padding: 5px;
+		padding-bottom: 1px;
+		margin-left: 5px;
+		margin-right: 5px;
+		border: 1px solid #161616;
+		border-radius: 4px;
+		transition: all ease-out 0.2s;
+		text-decoration: none;
+	}
+	.buttons > a:hover {
+		border-color: #D6D6D6;
+	}
+	.buttons > a.active {
+		color: #DDDF0D;
+		border-color: #DDDF0D;
+	}
+	#ranges, .help-button {
+		margin-left: 35px;
+	}
+	#about {
+		position: absolute;
+		height: 100%;
+		width: 100%;
+		top: 0;
+		display: none;
+		background: rgba(22,22,22,0.5);
+	}
+	#about-inner {
+		margin-top: 200px;
+		display: inline-block;
+		border: 1px solid #D6D6D6;
+		border-radius: 4px;
+		padding: 25px;
+		padding-top: 17px;
+		padding-bottom: 17px;
+		text-align: left;
+		line-height: 180%;
+		background: #161616;
+		box-shadow: 0px 0px 20px #0C0C0C;
+	}
+	#about-inner > h1 {
+		text-align: center;
+		font-size: 1.7em;
+		margin: 15px;
+	}
+	</style>
+</head>
+<body onclick="closeHelp()">
+	</div>	
+	<div class="top">
+		<div id="currencies" class="buttons">Currency: </div>
+		<div id="ranges" class="buttons">Range: </div>
+		<a href="#" onclick="showHelp(event); return false" class="help-button">?</a>
+	</div>
+	<div id="loading">
+		Loading ...
+	</div>	
+	<div id="ChartContainer">
+		<div id="placeholder">
+			Select a currency
+		</div>
+	</div>
+	<div id="about">
+		<div id="about-inner" onclick="showHelp(event);">
+			<h1>Cryptocurrency Price Chart</h1>
+			Original URL: <a href="https://trustable-code.github.io/cryptocurrency-price-chart/">https://trustable-code.github.io/cryptocurrency-price-chart/</a><br>
+			Developer: <a href="https://github.com/trustable-code" target="_blank">Simon Krauter</a><br>
+			Repository: <a href="https://github.com/trustable-code/cryptocurrency-price-chart" target="_blank">https://github.com/trustable-code/cryptocurrency-price-chart</a><br>
+			Data provider: <a href="https://poloniex.com" target="_blank">https://poloniex.com</a><br>
+			Chart library: <a href="https://www.highcharts.com" target="_blank">https://www.highcharts.com</a>
+		</div>	
+</body>
+
+<script>
+var currencies = ["BTC", "ETH", "LTC", "DASH", "XMR"];
+var ranges = {"1m": 30, "3m": 365 / 4, "6m": 365 / 2, "1y": 365, "2y": 365 * 2, "4y": 365 * 4};
+var baseTite = document.title;
+var currency = "";
+var defaultRange = "1y";
+var range = defaultRange;
+
+for(var i in currencies) {
+	var cur = currencies[i];
+	var el = document.createElement("A");
+	el.id = cur;
+	el.innerHTML = cur;
+	document.getElementById("currencies").appendChild(el);	
+}
+
+for(var ran in ranges) {
+	var el = document.createElement("A");
+	el.id = ran;
+	el.innerHTML = ran;
+	if(range == ran)
+		el.classList.add("active");
+	document.getElementById("ranges").appendChild(el);	
+}
+updateHref();
+
+window.onhashchange = function() {
+	updateChart();
+}
+updateChart();
+
+function updateChart() {
+	if(currency != "")
+	  document.getElementById(currency).classList.remove("active");		
+	document.getElementById(range).classList.remove("active");		
+	var hash = window.location.hash.substr(1);
+	var sep = hash.indexOf(":");
+	if(sep != -1) {
+		currency = hash.substr(0, sep);
+		if(currencies.indexOf(currency) == -1)
+		{
+			currency = "";
+			return;
+		}
+		range = hash.substr(sep + 1);
+		if(!(range in ranges))
+			range = defaultRange;
+	} else
+		currency = hash;
+	document.getElementById(currency).classList.add("active");	
+	document.getElementById(range).classList.add("active");	
+	document.getElementById("ChartContainer").innerHTML = "";
+	document.getElementById("loading").style.display = "block";
+	document.title =  currency + " – " + range + " – " + baseTite;
+	window.location.href = genHash(currency, range);
+	updateHref();
+	var start = Math.round((new Date().getTime() / 1000) - ranges[range] * 24 * 60 * 60);
+	var url = "https://poloniex.com/public?command=returnChartData&currencyPair=USDT_" + currency + "&start=" + start + "&end=9999999999&period=86400";
+	$.ajax(url).done(function(data) {
+		showChart(data);
+	});
+}
+
+function genHash(cur, ran) { 
+	return "#" + cur + ":" + ran;
+}
+
+function updateHref() {
+	for(var i in currencies) {
+		var cur = currencies[i];
+		document.getElementById(cur).href = genHash(cur, range);
+	}
+	for(var ran in ranges) {	
+		document.getElementById(ran).href = genHash(currency, ran);
+	}	
+}
+		
+function showChart(data) {
+	Highcharts.setOptions({
+		global: {
+			useUTC: false
+		},
+		chart: {
+			style: {
+				fontFamily: "Noto Sans, serif"
+			}
+		}
+	});
+
+	var ChartData = {
+		chart: {
+			renderTo: "ChartContainer",
+			type: "line"
+		},
+		xAxis: {
+			type: "datetime",
+			labels: {
+				format: "{value:%Y-%m-%d}"
+			}
+		},
+		yAxis: {
+			type: "logarithmic",
+			offset: 45,
+			labels: {
+				format: "{value:.0f} $"
+			}
+		},
+		tooltip: {
+			pointFormat: "<span style=\"color:{series.color}\">\u25CF</span> {point.y:.2f} $",
+			xDateFormat: "%a, %Y-%m-%d %H:%M"
+		},
+		plotOptions: {
+			line: {
+				animation: false,
+				marker: {
+					enabled: false
+				}
+			}
+		},
+		navigator: {
+			enabled: false
+		},
+		rangeSelector: {
+			enabled: false
+		},
+		scrollbar: {
+			enabled: false
+		},
+		credits: {
+			enabled: false
+		}
+	};
+	var Chart = new Highcharts.StockChart(ChartData);
+	
+	// Add data:
+	var series = {
+		name: currency,
+		data: []
+	}
+	for(var i in data) {
+		series.data.push([data[i]["date"] * 1000, data[i]["weightedAverage"]]);
+	}
+	Chart.addSeries(series);
+	
+	document.getElementById("loading").style.display = "none";
+}
+
+function showHelp(event) {
+	document.getElementById("about").style.display = "block";
+	event.stopPropagation();
+}
+function closeHelp() {
+	document.getElementById("about").style.display = "";
+}
+
+function getURLParamValue(name) {
+	var a = RegExp(name + "=(.+?)(&|$)").exec(location.search);
+	if(a == null)
+		return null
+  return decodeURI(a[1]);
+}
+
+</script>
+</html>
