@@ -7,6 +7,8 @@ Data provider: https://poloniex.com
 
 Chart library: https://www.highcharts.com
 
+Live version: https://trustable-code.github.io/cryptocurrency-price-chart/
+
 License
 -------
 
