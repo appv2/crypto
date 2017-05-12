@@ -118,7 +118,7 @@
 
 <script>
 var currencies = ["BTC", "ETH", "LTC", "DASH", "XMR"];
-var ranges = {"1m": 30, "3m": 365 / 4, "6m": 365 / 2, "1y": 365, "2y": 365 * 2, "4y": 365 * 4};
+var ranges = {"2d": 2, "1w": 7, "2w": 14, "1m": 30, "3m": 365 / 4, "6m": 365 / 2, "1y": 365, "2y": 365 * 2, "4y": 365 * 4};
 var baseTite = document.title;
 var currency = "";
 var defaultRange = "1y";
@@ -173,7 +173,19 @@ function updateChart() {
 	window.location.href = genHash(currency, range);
 	updateHref();
 	var start = Math.round((new Date().getTime() / 1000) - ranges[range] * 24 * 60 * 60);
-	var url = "https://poloniex.com/public?command=returnChartData&currencyPair=USDT_" + currency + "&start=" + start + "&end=9999999999&period=86400";
+	var period; // number of seconds
+	if(ranges[range] <= 2)
+	  period = 900; // 15 minutes
+	else if(ranges[range] <= 7)
+	  period = 1800; // 30 minutes
+	else if(ranges[range] <= 14)
+	  period = 7200; // 2 hours
+	else if(ranges[range] <= 60)
+		period = 14400; // 4 hours
+	else
+		period = 86400; // 1 day
+		
+	var url = "https://poloniex.com/public?command=returnChartData&currencyPair=USDT_" + currency + "&start=" + start + "&end=9999999999&period=" + period;
 	$.ajax(url).done(function(data) {
 		showChart(data);
 	});
@@ -204,7 +216,15 @@ function showChart(data) {
 			}
 		}
 	});
-
+	
+	var xAxisFormat;
+	if(ranges[range] <= 7)
+		xAxisFormat = "{value:%a %H:%M}";
+	else if(ranges[range] <= 365)
+		xAxisFormat = "{value:%b %e}";
+	else
+		xAxisFormat = "{value:%Y %b}";
+	
 	var ChartData = {
 		chart: {
 			renderTo: "ChartContainer",
@@ -213,7 +233,7 @@ function showChart(data) {
 		xAxis: {
 			type: "datetime",
 			labels: {
-				format: "{value:%Y-%m-%d}"
+				format: xAxisFormat
 			}
 		},
 		yAxis: {
