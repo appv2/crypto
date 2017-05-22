@@ -7,7 +7,7 @@ Highcharts.theme = {
 	colors: ["#DDDF0D", "#4E8ACE", "#55BF3B", "#DF5353", "#aaeeee", "#ff0066", "#eeaaee",
 		"#55BF3B", "#DF5353", "#7798BF", "#aaeeee"],
 	chart: {
-		backgroundColor: '#161616',
+		backgroundColor: '#1E1F21',
 		borderWidth: 0,
 		borderRadius: 0,
 		plotBackgroundColor: null,
@@ -78,7 +78,7 @@ Highcharts.theme = {
 		}
 	},
 	tooltip: {
-		backgroundColor: '#2D2D2D',
+		backgroundColor: '#1E1F21',
 		borderWidth: 0,
 		borderRadius: 10,
 		style: {

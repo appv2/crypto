@@ -9,10 +9,11 @@
 	<style>
 	body {
 		font-family: "Segoe UI", Helvetica, sans-serif;
-		background: #161616;
+		font-size: 92%;
+		background: #1E1F21;
 		margin: 0; 
 		padding: 0; 
-		height: 95%;
+		height: 93%;
 		text-align: center;
 	}
 	.body, .buttons > a, .help-button {
@@ -24,10 +25,13 @@
 	a {
 		color: #3885E2;
 	}
-	#loading, #placeholder {
+	#loading, #placeholder, .error {
 		top: 150px;
 		width: 100%;
 		position: absolute;
+	}
+	.error {
+		color: red;
 	}
 	#loading {
 		display: none;
@@ -38,6 +42,12 @@
 	.top {
 		margin-top: 8px;
 	}
+	#currRel {
+		margin-left: 18px;
+	}
+	#ranges {
+		margin-top: 8px;
+	}
 	.buttons {
 		display: inline-block;
 	}
@@ -45,12 +55,13 @@
 		display: inline-block;
 		padding: 5px;
 		padding-bottom: 1px;
-		margin-left: 5px;
-		margin-right: 5px;
-		border: 1px solid #161616;
+		margin-left: 7px;
+		margin-right: 3px;
+		border: 1px solid transparent;
 		border-radius: 4px;
 		transition: all ease-out 0.2s;
 		text-decoration: none;
+		min-width: 25px;
 	}
 	.buttons > a:hover {
 		border-color: #D6D6D6;
@@ -94,9 +105,10 @@
 	</div>	
 	<div class="top">
 		<div id="currencies" class="buttons">Currency: </div>
-		<div id="ranges" class="buttons">Range: </div>
+		<div id="currRel" class="buttons">Compared to: </div>
 		<a href="#" onclick="showHelp(event); return false" class="help-button">?</a>
 	</div>
+	<div id="ranges" class="buttons">Range: </div>
 	<div id="loading">
 		Loading ...
 	</div>	
@@ -117,27 +129,51 @@
 </body>
 
 <script>
-var currencies = ["BTC", "ETH", "LTC", "DASH", "XMR"];
-var ranges = {"2d": 2, "1w": 7, "2w": 14, "1m": 30, "3m": 365 / 4, "6m": 365 / 2, "1y": 365, "2y": 365 * 2, "4y": 365 * 4};
+var currencies = {
+	"USDT": {"label": "$", "showLeft": false}, 
+	"BTC": {"label": "BTC", "showLeft": true, "compareTo": ["USDT"]}, 
+	"ETH": {"label": "ETH", "showLeft": true, "compareTo": ["USDT", "BTC"]}, 
+	"LTC": {"label": "LTC", "showLeft": true, "compareTo": ["USDT", "BTC", "XMR"]}, 
+	"DASH": {"label": "DASH", "showLeft": true, "compareTo": ["USDT", "BTC", "XMR"]}, 
+	"XMR": {"label": "XMR", "showLeft": true, "compareTo": ["USDT", "BTC"]}
+};
+var ranges = {
+	"2d": 2, 
+	"1w": 7, 
+	"2w": 14, 
+	"1m": 30, 
+	"3m": 365 / 4, 
+	"6m": 365 / 2, 
+	"1y": 365, 
+	"2y": 365 * 2, 
+	"4y": 365 * 4
+};
 var baseTite = document.title;
 var currency = "";
+var currRel = "USDT";
 var defaultRange = "1y";
 var range = defaultRange;
 
-for(var i in currencies) {
-	var cur = currencies[i];
+for(var cur in currencies) {
+	if(currencies[cur]["showLeft"]) {
+		var el = document.createElement("A");
+		el.id = cur;
+		el.innerHTML = currencies[cur]["label"];
+		document.getElementById("currencies").appendChild(el);
+	}	
+}
+
+for(var cur in currencies) {
 	var el = document.createElement("A");
-	el.id = cur;
-	el.innerHTML = cur;
-	document.getElementById("currencies").appendChild(el);	
+	el.id = cur + "Rel";
+	el.innerHTML = currencies[cur]["label"];
+	document.getElementById("currRel").appendChild(el);
 }
 
 for(var ran in ranges) {
 	var el = document.createElement("A");
 	el.id = ran;
 	el.innerHTML = ran;
-	if(range == ran)
-		el.classList.add("active");
 	document.getElementById("ranges").appendChild(el);	
 }
 updateHref();
@@ -151,26 +187,43 @@ function updateChart() {
 	if(currency != "")
 	  document.getElementById(currency).classList.remove("active");		
 	document.getElementById(range).classList.remove("active");		
+	document.getElementById(currRel + "Rel").classList.remove("active");		
 	var hash = window.location.hash.substr(1);
-	var sep = hash.indexOf(":");
-	if(sep != -1) {
-		currency = hash.substr(0, sep);
-		if(currencies.indexOf(currency) == -1)
-		{
-			currency = "";
-			return;
-		}
-		range = hash.substr(sep + 1);
-		if(!(range in ranges))
-			range = defaultRange;
-	} else
-		currency = hash;
+	var a = hash.split(":");
+	var currPair = ""
+	if(a.length == 1)
+		currPair = hash;
+	else if(a.length == 2) {
+		currPair = a[0];
+		range = a[1];
+	}
+	a = currPair.split("/");
+	if(a.length == 1) {
+		currency = a[0];
+	}
+	else if(a.length == 2) {
+		currency = a[0];
+		currRel = a[1];
+	}
+	if(!(currency in currencies))
+	{
+		currency = "";
+		return;
+	}
+	if(!(currRel in currencies) || isCurrRelDisabled(currRel))
+		currRel = "USDT";
+	
+	if(currency == "")
+		return;
+	if(!(range in ranges))
+		range = defaultRange;
 	document.getElementById(currency).classList.add("active");	
 	document.getElementById(range).classList.add("active");	
+	document.getElementById(currRel + "Rel").classList.add("active");	
 	document.getElementById("ChartContainer").innerHTML = "";
 	document.getElementById("loading").style.display = "block";
-	document.title =  currency + " – " + range + " – " + baseTite;
-	window.location.href = genHash(currency, range);
+	//~ document.title = currencies[currency]["label"] + " in " + currencies[currRel]["label"] + " – " + range + " – " + baseTite;
+	window.location.href = genHash(currency, currRel, range);
 	updateHref();
 	var start = Math.round((new Date().getTime() / 1000) - ranges[range] * 24 * 60 * 60);
 	var period; // number of seconds
@@ -185,23 +238,41 @@ function updateChart() {
 	else
 		period = 86400; // 1 day
 		
-	var url = "https://poloniex.com/public?command=returnChartData&currencyPair=USDT_" + currency + "&start=" + start + "&end=9999999999&period=" + period;
+	var url = "https://poloniex.com/public?command=returnChartData&currencyPair=" + currRel + "_" + currency + "&start=" + start + "&end=9999999999&period=" + period;
 	$.ajax(url).done(function(data) {
 		showChart(data);
 	});
 }
 
-function genHash(cur, ran) { 
-	return "#" + cur + ":" + ran;
+function genHash(cur, currRel, ran) { 
+	return "#" + cur + "/" + currRel + ":" + ran;
+}
+
+function isCurrRelDisabled(cur) {
+	return cur == currency || (currency != "" && currencies[currency]["compareTo"] && currencies[currency]["compareTo"].indexOf(cur) == -1);
 }
 
 function updateHref() {
-	for(var i in currencies) {
-		var cur = currencies[i];
-		document.getElementById(cur).href = genHash(cur, range);
+	var rightCount = 0;
+	for(var cur in currencies) {
+		var el = document.getElementById(cur);
+		if(el)
+			el.href = genHash(cur, currRel, range);
+		el = document.getElementById(cur + "Rel");
+		el.href = genHash(currency, cur, range);
+		if(isCurrRelDisabled(cur))
+		  el.style.display = "none";
+		else {
+		  el.style.display = "";
+		  rightCount++;
+		}
 	}
+	if(currency != "" && rightCount >= 2)
+		document.getElementById("currRel").style.display = "";
+	else
+		document.getElementById("currRel").style.display = "none";
 	for(var ran in ranges) {	
-		document.getElementById(ran).href = genHash(currency, ran);
+		document.getElementById(ran).href = genHash(currency, currRel, ran);
 	}	
 }
 		
@@ -217,6 +288,13 @@ function showChart(data) {
 		}
 	});
 	
+	if(data["error"]) {
+		document.getElementById("ChartContainer").innerHTML = "<div class=\"error\">" + data["error"] + "</div>";
+		document.getElementById("loading").style.display = "none";
+		document.title = baseTite;
+		return;
+	}
+	
 	var xAxisFormat;
 	if(ranges[range] <= 7)
 		xAxisFormat = "{value:%a %H:%M}";
@@ -224,7 +302,16 @@ function showChart(data) {
 		xAxisFormat = "{value:%b %e}";
 	else
 		xAxisFormat = "{value:%Y %b}";
-	
+	var maxValue = 0;
+	for(var i in data) {
+		var value = data[i]["weightedAverage"];
+		if(maxValue < value)
+			maxValue = value;
+	}	
+	var decimals = 4 - Math.round(maxValue).toString().length;
+	var unit = currencies[currRel]["label"] + "/" + currencies[currency]["label"];
+	var lastValue = data[data.length - 1]["close"];
+	document.title = formatFloat(lastValue, decimals) + " " + unit + " – " + range + " – " + baseTite;
 	var ChartData = {
 		chart: {
 			renderTo: "ChartContainer",
@@ -238,13 +325,13 @@ function showChart(data) {
 		},
 		yAxis: {
 			type: "logarithmic",
-			offset: 45,
+			offset: 95,
 			labels: {
-				format: "{value:.0f} $"
+				format: "{value:." + decimals + "f} " + unit
 			}
 		},
 		tooltip: {
-			pointFormat: "<span style=\"color:{series.color}\">\u25CF</span> {point.y:.2f} $",
+			pointFormat: "<span style=\"color:{series.color}\">\u25CF</span> {point.y:." + decimals + "f} " + unit,
 			xDateFormat: "%a, %Y-%m-%d %H:%M"
 		},
 		plotOptions: {
@@ -268,6 +355,7 @@ function showChart(data) {
 			enabled: false
 		}
 	};
+	
 	var Chart = new Highcharts.StockChart(ChartData);
 	
 	// Add data:
@@ -296,6 +384,11 @@ function getURLParamValue(name) {
 	if(a == null)
 		return null
   return decodeURI(a[1]);
+}
+
+function formatFloat(value, decimals) {
+	var f = Math.pow(10, decimals);
+	return Math.round(value * f) / f;
 }
 
 </script>
