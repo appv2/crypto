@@ -10,11 +10,14 @@
 	body {
 		font-family: "Segoe UI", Helvetica, sans-serif;
 		font-size: 92%;
-		background: #1E1F21;
 		margin: 0; 
 		padding: 0; 
-		height: 93%;
+		
+		height: calc(100% - 70px);
 		text-align: center;
+	}
+	body, #about-inner {
+		background: #1E1F21;
 	}
 	body, .buttons > a, .help-button {
 		color: #D6D6D6;
@@ -81,7 +84,7 @@
 		width: 100%;
 		top: 0;
 		display: none;
-		background: rgba(22,22,22,0.5);
+		background: rgba(22,22,22,0.75);
 	}
 	#about-inner {
 		margin-top: 200px;
@@ -93,7 +96,6 @@
 		padding-bottom: 17px;
 		text-align: left;
 		line-height: 180%;
-		background: #161616;
 		box-shadow: 0px 0px 20px #0C0C0C;
 	}
 	#about-inner > h1 {
