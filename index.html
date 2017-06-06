@@ -325,7 +325,7 @@ function calculateAverage(rows) {
 			val = val + rows[i + 2][1] * factor2;
 			count = count + factor2;
 		}
-		val = Math.round(val / count);
+		val = val / count;
 		avgRows.push([key, val]);
 	}
 	return avgRows;
