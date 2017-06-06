@@ -10,9 +10,9 @@
 	body {
 		font-family: "Segoe UI", Helvetica, sans-serif;
 		font-size: 92%;
-		margin: 0; 
-		padding: 0; 
-		
+		margin: 0;
+		padding: 0;
+
 		height: calc(100% - 70px);
 		text-align: center;
 	}
@@ -48,7 +48,7 @@
 	#currRel {
 		margin-left: 18px;
 	}
-	#ranges {
+	.top2 {
 		margin-top: 8px;
 	}
 	.buttons {
@@ -75,8 +75,11 @@
 		color: #DDDF0D;
 		border-color: #DDDF0D;
 	}
-	#ranges, .help-button {
+	.help-button {
 		margin-left: 35px;
+	}
+	#smooth-button {
+		margin-left: 10px;
 	}
 	#about {
 		position: absolute;
@@ -106,16 +109,21 @@
 	</style>
 </head>
 <body onclick="closeHelp()">
-	</div>	
+	</div>
 	<div class="top">
 		<div id="currencies" class="buttons">Currency: </div>
 		<div id="currRel" class="buttons">Compared to: </div>
 		<a href="#" onclick="showHelp(event); return false" class="help-button">?</a>
 	</div>
-	<div id="ranges" class="buttons">Range: </div>
+	<div class="top2">
+		<div id="ranges" class="buttons">Range: </div>
+		<div class="buttons">
+			<a href="#" id="smooth-button">Smooth</a>
+		</div>
+	</div>
 	<div id="loading">
 		Loading ...
-	</div>	
+	</div>
 	<div id="ChartContainer">
 		<div id="placeholder">
 			Select a currency
@@ -129,27 +137,27 @@
 			Repository: <a href="https://github.com/trustable-code/cryptocurrency-price-chart" target="_blank">https://github.com/trustable-code/cryptocurrency-price-chart</a><br>
 			Data provider: <a href="https://poloniex.com" target="_blank">https://poloniex.com</a><br>
 			Chart library: <a href="https://www.highcharts.com" target="_blank">https://www.highcharts.com</a>
-		</div>	
+		</div>
 </body>
 
 <script>
 var currencies = {
-	"USDT": {"label": "$", "showLeft": false}, 
-	"BTC": {"label": "BTC", "showLeft": true, "compareTo": ["USDT"]}, 
-	"ETH": {"label": "ETH", "showLeft": true, "compareTo": ["USDT", "BTC"]}, 
-	"LTC": {"label": "LTC", "showLeft": true, "compareTo": ["USDT", "BTC", "XMR"]}, 
-	"DASH": {"label": "DASH", "showLeft": true, "compareTo": ["USDT", "BTC", "XMR"]}, 
+	"USDT": {"label": "$", "showLeft": false},
+	"BTC": {"label": "BTC", "showLeft": true, "compareTo": ["USDT"]},
+	"ETH": {"label": "ETH", "showLeft": true, "compareTo": ["USDT", "BTC"]},
+	"LTC": {"label": "LTC", "showLeft": true, "compareTo": ["USDT", "BTC", "XMR"]},
+	"DASH": {"label": "DASH", "showLeft": true, "compareTo": ["USDT", "BTC", "XMR"]},
 	"XMR": {"label": "XMR", "showLeft": true, "compareTo": ["USDT", "BTC"]}
 };
 var ranges = {
-	"2d": 2, 
-	"1w": 7, 
-	"2w": 14, 
-	"1m": 30, 
-	"3m": 365 / 4, 
-	"6m": 365 / 2, 
-	"1y": 365, 
-	"2y": 365 * 2, 
+	"2d": 2,
+	"1w": 7,
+	"2w": 14,
+	"1m": 30,
+	"3m": 365 / 4,
+	"6m": 365 / 2,
+	"1y": 365,
+	"2y": 365 * 2,
 	"4y": 365 * 4
 };
 var baseTite = document.title;
@@ -157,6 +165,7 @@ var currency = "";
 var currRel = "USDT";
 var defaultRange = "1y";
 var range = defaultRange;
+var smooth = false;
 
 for(var cur in currencies) {
 	if(currencies[cur]["showLeft"]) {
@@ -164,7 +173,7 @@ for(var cur in currencies) {
 		el.id = cur;
 		el.innerHTML = currencies[cur]["label"];
 		document.getElementById("currencies").appendChild(el);
-	}	
+	}
 }
 
 for(var cur in currencies) {
@@ -178,7 +187,7 @@ for(var ran in ranges) {
 	var el = document.createElement("A");
 	el.id = ran;
 	el.innerHTML = ran;
-	document.getElementById("ranges").appendChild(el);	
+	document.getElementById("ranges").appendChild(el);
 }
 updateHref();
 
@@ -189,18 +198,20 @@ updateChart();
 
 function updateChart() {
 	if(currency != "")
-	  document.getElementById(currency).classList.remove("active");		
-	document.getElementById(range).classList.remove("active");		
-	document.getElementById(currRel + "Rel").classList.remove("active");		
+	  document.getElementById(currency).classList.remove("active");
+	document.getElementById(range).classList.remove("active");
+	document.getElementById(currRel + "Rel").classList.remove("active");
+	document.getElementById("smooth-button").classList.remove("active");
 	var hash = window.location.hash.substr(1);
 	var a = hash.split(":");
-	var currPair = ""
-	if(a.length == 1)
-		currPair = hash;
-	else if(a.length == 2) {
-		currPair = a[0];
+	var currPair = "";
+	currPair = a[0];
+	if(a.length >= 2)
 		range = a[1];
-	}
+	if(a.length >= 3 && a[2] == "smooth")
+		smooth = true;
+	else
+		smooth = false;
 	a = currPair.split("/");
 	if(a.length == 1) {
 		currency = a[0];
@@ -216,40 +227,44 @@ function updateChart() {
 	}
 	if(!(currRel in currencies) || isCurrRelDisabled(currRel))
 		currRel = "USDT";
-	
+
 	if(currency == "")
 		return;
 	if(!(range in ranges))
 		range = defaultRange;
-	document.getElementById(currency).classList.add("active");	
-	document.getElementById(range).classList.add("active");	
-	document.getElementById(currRel + "Rel").classList.add("active");	
+	document.getElementById(currency).classList.add("active");
+	document.getElementById(range).classList.add("active");
+	document.getElementById(currRel + "Rel").classList.add("active");
+	if(smooth)
+		document.getElementById("smooth-button").classList.add("active");
 	document.getElementById("ChartContainer").innerHTML = "";
 	document.getElementById("loading").style.display = "block";
-	//~ document.title = currencies[currency]["label"] + " in " + currencies[currRel]["label"] + " – " + range + " – " + baseTite;
-	window.location.href = genHash(currency, currRel, range);
+	window.location.href = genHash(currency, currRel, range, smooth);
 	updateHref();
 	var start = Math.round((new Date().getTime() / 1000) - ranges[range] * 24 * 60 * 60);
 	var period; // number of seconds
-	if(ranges[range] <= 2)
-	  period = 900; // 15 minutes
-	else if(ranges[range] <= 7)
-	  period = 1800; // 30 minutes
+	if(ranges[range] <= 7)
+	  period = 60*15; // 15 minutes
 	else if(ranges[range] <= 14)
-	  period = 7200; // 2 hours
-	else if(ranges[range] <= 60)
-		period = 14400; // 4 hours
+	  period = 60*30; // 30 minutes
+	else if(ranges[range] <= 50)
+	  period = 60*60*2; // 2 hours
+	else if(ranges[range] <= 200)
+		period = 60*60*4; // 4 hours
 	else
-		period = 86400; // 1 day
-		
+		period = 60*60*24; // 1 day
+
 	var url = "https://poloniex.com/public?command=returnChartData&currencyPair=" + currRel + "_" + currency + "&start=" + start + "&end=9999999999&period=" + period;
 	$.ajax(url).done(function(data) {
 		showChart(data);
 	});
 }
 
-function genHash(cur, currRel, ran) { 
-	return "#" + cur + "/" + currRel + ":" + ran;
+function genHash(cur, currRel, ran, smooth) {
+	var hash = "#" + cur + "/" + currRel + ":" + ran;
+	if(smooth)
+		hash = hash + ":smooth"
+	return hash;
 }
 
 function isCurrRelDisabled(cur) {
@@ -261,9 +276,9 @@ function updateHref() {
 	for(var cur in currencies) {
 		var el = document.getElementById(cur);
 		if(el)
-			el.href = genHash(cur, currRel, range);
+			el.href = genHash(cur, currRel, range, smooth);
 		el = document.getElementById(cur + "Rel");
-		el.href = genHash(currency, cur, range);
+		el.href = genHash(currency, cur, range, smooth);
 		if(isCurrRelDisabled(cur))
 		  el.style.display = "none";
 		else {
@@ -275,11 +290,47 @@ function updateHref() {
 		document.getElementById("currRel").style.display = "";
 	else
 		document.getElementById("currRel").style.display = "none";
-	for(var ran in ranges) {	
-		document.getElementById(ran).href = genHash(currency, currRel, ran);
-	}	
+	for(var ran in ranges) {
+		document.getElementById(ran).href = genHash(currency, currRel, ran, smooth);
+	}
+	document.getElementById("smooth-button").href = genHash(currency, currRel, range, !smooth);
 }
-		
+
+function calculateAverage(rows) {
+  var avgRows = [];
+  var factor1 = 0.5;
+  var factor2 = 0.25;
+  for(var i = 0; i < rows.length; i++)
+  {
+		var key = rows[i][0];
+		var val = rows[i][1];
+		var count = 1;
+		if(i > 0)
+		{
+			val = val + rows[i - 1][1] * factor1;
+			count = count + factor1;
+		}
+		if(i > 1)
+		{
+			val = val + rows[i - 2][1] * factor2;
+			count = count + factor2;
+		}
+		if(i < rows.length - 1)
+		{
+			val = val + rows[i + 1][1] * factor1;
+			count = count + factor1;
+		}
+		if(i < rows.length - 2)
+		{
+			val = val + rows[i + 2][1] * factor2;
+			count = count + factor2;
+		}
+		val = Math.round(val / count);
+		avgRows.push([key, val]);
+	}
+	return avgRows;
+}
+
 function showChart(data) {
 	Highcharts.setOptions({
 		global: {
@@ -291,14 +342,14 @@ function showChart(data) {
 			}
 		}
 	});
-	
+
 	if(data["error"]) {
 		document.getElementById("ChartContainer").innerHTML = "<div class=\"error\">" + data["error"] + "</div>";
 		document.getElementById("loading").style.display = "none";
 		document.title = baseTite;
 		return;
 	}
-	
+
 	var xAxisFormat;
 	if(ranges[range] <= 7)
 		xAxisFormat = "{value:%a %H:%M}";
@@ -311,12 +362,12 @@ function showChart(data) {
 		var value = data[i]["weightedAverage"];
 		if(maxValue < value)
 			maxValue = value;
-	}	
+	}
 	var decimals = 4 - Math.round(maxValue).toString().length;
 	var unit = currencies[currRel]["label"] + "/" + currencies[currency]["label"];
 	var lastValue = data[data.length - 1]["close"];
 	document.title = formatFloat(lastValue, decimals) + " " + unit + " – " + range + " – " + baseTite;
-	var ChartData = {
+	var chartData = {
 		chart: {
 			renderTo: "ChartContainer",
 			type: "line"
@@ -359,9 +410,7 @@ function showChart(data) {
 			enabled: false
 		}
 	};
-	
-	var Chart = new Highcharts.StockChart(ChartData);
-	
+
 	// Add data:
 	var series = {
 		name: currency,
@@ -370,8 +419,14 @@ function showChart(data) {
 	for(var i in data) {
 		series.data.push([data[i]["date"] * 1000, data[i]["weightedAverage"]]);
 	}
-	Chart.addSeries(series);
+	if(smooth) {
+		series.data = calculateAverage(series.data);
+		chartData.chart.type = "spline";
+	}
 	
+	var chart = new Highcharts.StockChart(chartData);
+	chart.addSeries(series);
+
 	document.getElementById("loading").style.display = "none";
 }
 
