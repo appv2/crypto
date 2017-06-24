@@ -331,6 +331,28 @@ function calculateAverage(rows) {
 	return avgRows;
 }
 
+function getUserfulNumberOfDecimals(rows) {
+	if(rows.length == 0)
+		return 0;
+	var minValue = rows[0][1];
+	var maxValue = rows[0][1];
+	for(var i = 1; i < rows.length; i++)
+	{
+		var val = rows[i][1];
+		if(minValue > val)
+			minValue = val;
+		if(maxValue < val)
+			maxValue = val;
+	}
+	var diff = maxValue - minValue;
+	var decimals = 0;
+	while(diff < 50) {
+		diff = diff * 10;
+		decimals++;
+	}
+	return decimals;
+}
+
 function showChart(data) {
 	Highcharts.setOptions({
 		global: {
@@ -357,13 +379,17 @@ function showChart(data) {
 		xAxisFormat = "{value:%b %e}";
 	else
 		xAxisFormat = "{value:%Y %b}";
-	var maxValue = 0;
-	for(var i in data) {
-		var value = data[i]["weightedAverage"];
-		if(maxValue < value)
-			maxValue = value;
+
+	// prepare data:
+	var series = {
+		name: currency,
+		data: []
 	}
-	var decimals = 4 - Math.round(maxValue).toString().length;
+	for(var i in data) {
+		series.data.push([data[i]["date"] * 1000, data[i]["weightedAverage"]]);
+	}
+	
+	var decimals = getUserfulNumberOfDecimals(series.data);
 	var unit = currencies[currRel]["label"] + "/" + currencies[currency]["label"];
 	var lastValue = data[data.length - 1]["close"];
 	document.title = formatFloat(lastValue, decimals) + " " + unit + " – " + range + " – " + baseTite;
@@ -382,7 +408,7 @@ function showChart(data) {
 			type: "logarithmic",
 			offset: 95,
 			labels: {
-				format: "{value:." + decimals + "f} " + unit
+				format: "{value:." + Math.max(decimals - 1, 0) + "f} " + unit
 			}
 		},
 		tooltip: {
@@ -412,13 +438,6 @@ function showChart(data) {
 	};
 
 	// Add data:
-	var series = {
-		name: currency,
-		data: []
-	}
-	for(var i in data) {
-		series.data.push([data[i]["date"] * 1000, data[i]["weightedAverage"]]);
-	}
 	if(smooth) {
 		series.data = calculateAverage(series.data);
 		chartData.chart.type = "spline";
