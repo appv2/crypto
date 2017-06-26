@@ -142,12 +142,13 @@
 
 <script>
 var currencies = {
-	"USDT": {"label": "$", "showLeft": false},
-	"BTC": {"label": "BTC", "showLeft": true, "compareTo": ["USDT"]},
-	"ETH": {"label": "ETH", "showLeft": true, "compareTo": ["USDT", "BTC"]},
-	"LTC": {"label": "LTC", "showLeft": true, "compareTo": ["USDT", "BTC", "XMR"]},
-	"DASH": {"label": "DASH", "showLeft": true, "compareTo": ["USDT", "BTC", "XMR"]},
-	"XMR": {"label": "XMR", "showLeft": true, "compareTo": ["USDT", "BTC"]}
+	"USDT": {"shortName": "$", "longName": "Tether Dollar", "showLeft": false},
+	"BTC": {"shortName": "BTC", "longName": "Bitcoin", "showLeft": true, "compareTo": ["USDT"]},
+	"ETH": {"shortName": "ETH", "longName": "Ethereum", "showLeft": true, "compareTo": ["USDT", "BTC"]},
+	"LTC": {"shortName": "LTC", "longName": "Litecoin", "showLeft": true, "compareTo": ["USDT", "BTC", "XMR"]},
+	"ETC": {"shortName": "ETC", "longName": "Ethereum Classic", "showLeft": true, "compareTo": ["USDT", "BTC", "ETH"]},
+	"DASH": {"shortName": "DASH", "longName": "Dash", "showLeft": true, "compareTo": ["USDT", "BTC", "XMR"]},
+	"XMR": {"shortName": "XMR", "longName": "Monero", "showLeft": true, "compareTo": ["USDT", "BTC"]}
 };
 var ranges = {
 	"2d": 2,
@@ -171,7 +172,7 @@ for(var cur in currencies) {
 	if(currencies[cur]["showLeft"]) {
 		var el = document.createElement("A");
 		el.id = cur;
-		el.innerHTML = currencies[cur]["label"];
+		el.innerHTML = currencies[cur]["shortName"];
 		document.getElementById("currencies").appendChild(el);
 	}
 }
@@ -179,7 +180,7 @@ for(var cur in currencies) {
 for(var cur in currencies) {
 	var el = document.createElement("A");
 	el.id = cur + "Rel";
-	el.innerHTML = currencies[cur]["label"];
+	el.innerHTML = currencies[cur]["shortName"];
 	document.getElementById("currRel").appendChild(el);
 }
 
@@ -390,13 +391,16 @@ function showChart(data) {
 	}
 	
 	var decimals = getUserfulNumberOfDecimals(series.data);
-	var unit = currencies[currRel]["label"] + "/" + currencies[currency]["label"];
+	var unit = currencies[currRel]["shortName"] + "/" + currencies[currency]["shortName"];
 	var lastValue = data[data.length - 1]["close"];
 	document.title = formatFloat(lastValue, decimals) + " " + unit + " – " + range + " – " + baseTite;
 	var chartData = {
 		chart: {
 			renderTo: "ChartContainer",
 			type: "line"
+		},
+		title: {
+			y: 30
 		},
 		xAxis: {
 			type: "datetime",
@@ -421,6 +425,9 @@ function showChart(data) {
 				marker: {
 					enabled: false
 				}
+			},
+			spline: {
+				animation: false
 			}
 		},
 		navigator: {
@@ -442,6 +449,10 @@ function showChart(data) {
 		series.data = calculateAverage(series.data);
 		chartData.chart.type = "spline";
 	}
+	
+	chartData.title.text = currencies[currency]["longName"];
+	if(currRel != "USDT")
+		chartData.title.text = chartData.title.text + " / " + currencies[currRel]["longName"];
 	
 	var chart = new Highcharts.StockChart(chartData);
 	chart.addSeries(series);

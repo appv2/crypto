@@ -17,13 +17,13 @@ Highcharts.theme = {
 	title: {
 		style: {
 			color: '#FFF',
-			font: '18px Ubuntu, sans-serif'
+			font: '26px inherited'
 		}
 	},
 	subtitle: {
 		style: {
 			color: '#DDD',
-			font: '12px Ubuntu, sans-serif'
+			font: '12px inherited'
 		}
 	},
 	xAxis: {
@@ -38,7 +38,7 @@ Highcharts.theme = {
 		title: {
 			style: {
 				color: '#AAA',
-				font: 'bold 12px Ubuntu, sans-serif'
+				font: 'bold 12px inherited'
 			}
 		}
 	},
@@ -57,7 +57,7 @@ Highcharts.theme = {
 		title: {
 			style: {
 				color: '#AAA',
-				font: '12px Ubuntu, sans-serif'
+				font: '12px inherited'
 			}
 		}
 	},
