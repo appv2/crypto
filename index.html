@@ -75,10 +75,14 @@
 		color: #DDDF0D;
 		border-color: #DDDF0D;
 	}
+	#average-button.active {
+		color: #5494D3;
+		border-color: #5494D3;		
+	}
 	.help-button {
 		margin-left: 35px;
 	}
-	#smooth-button {
+	#average-button {
 		margin-left: 10px;
 	}
 	#about {
@@ -118,7 +122,7 @@
 	<div class="top2">
 		<div id="ranges" class="buttons">Range: </div>
 		<div class="buttons">
-			<a href="#" id="smooth-button">Smooth</a>
+			<a href="#" id="average-button">Average</a>
 		</div>
 	</div>
 	<div id="loading">
@@ -167,7 +171,9 @@ var currency = "";
 var currRel = "USDT";
 var defaultRange = "1y";
 var range = defaultRange;
-var smooth = false;
+var showAverage = false;
+var avgPeriod;
+var avgPeriodStr;
 
 for(var cur in currencies) {
 	if(currencies[cur]["showLeft"]) {
@@ -203,17 +209,17 @@ function updateChart() {
 	  document.getElementById(currency).classList.remove("active");
 	document.getElementById(range).classList.remove("active");
 	document.getElementById(currRel + "Rel").classList.remove("active");
-	document.getElementById("smooth-button").classList.remove("active");
+	document.getElementById("average-button").classList.remove("active");
 	var hash = window.location.hash.substr(1);
 	var a = hash.split(":");
 	var currPair = "";
 	currPair = a[0];
 	if(a.length >= 2)
 		range = a[1];
-	if(a.length >= 3 && a[2] == "smooth")
-		smooth = true;
+	if(a.length >= 3 && a[2] == "avg")
+		showAverage = true;
 	else
-		smooth = false;
+		showAverage = false;
 	a = currPair.split("/");
 	if(a.length == 1) {
 		currency = a[0];
@@ -237,24 +243,39 @@ function updateChart() {
 	document.getElementById(currency).classList.add("active");
 	document.getElementById(range).classList.add("active");
 	document.getElementById(currRel + "Rel").classList.add("active");
-	if(smooth)
-		document.getElementById("smooth-button").classList.add("active");
+	if(showAverage)
+		document.getElementById("average-button").classList.add("active");
 	document.getElementById("ChartContainer").innerHTML = "";
 	document.getElementById("loading").style.display = "block";
-	window.location.href = genHash(currency, currRel, range, smooth);
+	window.location.href = genHash(currency, currRel, range, showAverage);
 	updateHref();
 	var start = Math.round((new Date().getTime() / 1000) - ranges[range] * 24 * 60 * 60);
 	var period; // number of seconds
-	if(ranges[range] <= 7)
+	if(ranges[range] <= 7) {
 	  period = 60*15; // 15 minutes
-	else if(ranges[range] <= 14)
+	  avgPeriod = 24;
+	  avgPeriodStr = "6h";
+	} else if(ranges[range] <= 14) {
 	  period = 60*30; // 30 minutes
-	else if(ranges[range] <= 50)
+	  avgPeriod = 24;
+	  avgPeriodStr = "12h";
+	} else if(ranges[range] <= 50) {
 	  period = 60*60*2; // 2 hours
-	else if(ranges[range] <= 200)
+	  avgPeriod = 24;
+	  avgPeriodStr = "2d";
+	} else if(ranges[range] <= 100) {
+	  period = 60*60*2; // 2 hours
+	  avgPeriod = 48;
+	  avgPeriodStr = "4d";
+	} else if(ranges[range] <= 200) {
 		period = 60*60*4; // 4 hours
-	else
+		avgPeriod = 48;
+		avgPeriodStr = "8d";
+	} else {
 		period = 60*60*24; // 1 day
+		avgPeriod = 24;
+		avgPeriodStr = "24d";
+	}
 
 	var url = "https://poloniex.com/public?command=returnChartData&currencyPair=" + currRel + "_" + currency + "&start=" + start + "&end=9999999999&period=" + period;
 	$.ajax(url).done(function(data) {
@@ -262,10 +283,10 @@ function updateChart() {
 	});
 }
 
-function genHash(cur, currRel, ran, smooth) {
+function genHash(cur, currRel, ran, showAverage) {
 	var hash = "#" + cur + "/" + currRel + ":" + ran;
-	if(smooth)
-		hash = hash + ":smooth"
+	if(showAverage)
+		hash = hash + ":avg"
 	return hash;
 }
 
@@ -278,9 +299,9 @@ function updateHref() {
 	for(var cur in currencies) {
 		var el = document.getElementById(cur);
 		if(el)
-			el.href = genHash(cur, currRel, range, smooth);
+			el.href = genHash(cur, currRel, range, showAverage);
 		el = document.getElementById(cur + "Rel");
-		el.href = genHash(currency, cur, range, smooth);
+		el.href = genHash(currency, cur, range, showAverage);
 		if(isCurrRelDisabled(cur))
 		  el.style.display = "none";
 		else {
@@ -293,39 +314,29 @@ function updateHref() {
 	else
 		document.getElementById("currRel").style.display = "none";
 	for(var ran in ranges) {
-		document.getElementById(ran).href = genHash(currency, currRel, ran, smooth);
+		document.getElementById(ran).href = genHash(currency, currRel, ran, showAverage);
 	}
-	document.getElementById("smooth-button").href = genHash(currency, currRel, range, !smooth);
+	document.getElementById("average-button").href = genHash(currency, currRel, range, !showAverage);
 }
 
-function calculateAverage(rows) {
+function calculateAverage(rows, period) {
   var avgRows = [];
-  var factor1 = 0.5;
-  var factor2 = 0.25;
   for(var i = 0; i < rows.length; i++)
   {
 		var key = rows[i][0];
 		var val = rows[i][1];
 		var count = 1;
-		if(i > 0)
-		{
-			val = val + rows[i - 1][1] * factor1;
-			count = count + factor1;
+		for(var j = i - Math.round(period/2); j < i; j++) {
+			if(j > 0) {
+				val = val + rows[j][1];
+				count++;
+			}			
 		}
-		if(i > 1)
-		{
-			val = val + rows[i - 2][1] * factor2;
-			count = count + factor2;
-		}
-		if(i < rows.length - 1)
-		{
-			val = val + rows[i + 1][1] * factor1;
-			count = count + factor1;
-		}
-		if(i < rows.length - 2)
-		{
-			val = val + rows[i + 2][1] * factor2;
-			count = count + factor2;
+		for(var j = i + Math.round(period/2); j > i; j--) {
+			if(j < rows.length) {
+				val = val + rows[j][1];
+				count++;
+			}			
 		}
 		val = val / count;
 		avgRows.push([key, val]);
@@ -383,10 +394,12 @@ function showChart(data) {
 		xAxisFormat = "{value:%b %e}";
 	else
 		xAxisFormat = "{value:%Y %b}";
+		
+	var unit = currencies[currRel]["shortName"] + "/" + currencies[currency]["shortName"];
 
 	// prepare data:
 	var series = {
-		name: currency,
+		name: unit,
 		data: []
 	}
 	for(var i in data) {
@@ -394,8 +407,8 @@ function showChart(data) {
 	}
 	
 	var decimals = getUserfulNumberOfDecimals(series.data);
-	var unit = currencies[currRel]["shortName"] + "/" + currencies[currency]["shortName"];
 	var lastValue = data[data.length - 1]["close"];
+	var lastValueStr = "<span style=\"color:white;\">" + formatFloat(lastValue, decimals) + "</span> " + unit;
 	document.title = formatFloat(lastValue, decimals) + " " + unit + " – " + range + " – " + baseTite;
 	var chartData = {
 		chart: {
@@ -404,6 +417,8 @@ function showChart(data) {
 		},
 		title: {
 			y: 30
+		},
+		subtitle: {
 		},
 		xAxis: {
 			type: "datetime",
@@ -419,7 +434,7 @@ function showChart(data) {
 			}
 		},
 		tooltip: {
-			pointFormat: "<span style=\"color:{series.color}\">\u25CF</span> {point.y:." + decimals + "f} " + unit,
+			pointFormat: "<span style=\"color:{series.color}\">\u25CF</span> {point.y:." + decimals + "f} {series.name}<br>",
 			xDateFormat: "%a, %Y-%m-%d %H:%M"
 		},
 		plotOptions: {
@@ -446,19 +461,31 @@ function showChart(data) {
 			enabled: false
 		}
 	};
-	// Add data:
-	if(smooth) {
-		series.data = calculateAverage(series.data);
-		chartData.chart.type = "spline";
-	}
-	
+
 	chartData.title.text = currencies[currency]["longName"];
 	if(currRel != "USDT")
 		chartData.title.text = chartData.title.text + " / " + currencies[currRel]["longName"];
 	
+	chartData.subtitle.text = "latest: " + lastValueStr;
+
+	// Add average series:
+	var avgSeries;
+	if(showAverage) {
+		avgSeries = {
+			name: unit + " (" + avgPeriodStr + " average)",
+			data: calculateAverage(series.data, avgPeriod),
+			lineWidth: 1.5
+		}		
+		var avgLastValue = avgSeries.data[avgSeries.data.length - 1][1];
+		var avgLastValueStr = "<span style=\"color:white;\">" + formatFloat(avgLastValue, decimals) + "</span> " + unit;
+		chartData.subtitle.text = avgPeriodStr + " average: " + avgLastValueStr + " | " + chartData.subtitle.text;
+	}	
+	
 	var chart = new Highcharts.StockChart(chartData);
 	chart.addSeries(series);
-
+	if(showAverage)	
+		chart.addSeries(avgSeries);
+		
 	document.getElementById("loading").style.display = "none";
 }
 

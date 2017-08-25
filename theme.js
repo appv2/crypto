@@ -4,7 +4,7 @@
  */
 
 Highcharts.theme = {
-	colors: ["#DDDF0D", "#4E8ACE", "#55BF3B", "#DF5353", "#aaeeee", "#ff0066", "#eeaaee",
+	colors: ["#DDDF0D", "#5190CC", "#55BF3B", "#DF5353", "#aaeeee", "#ff0066", "#eeaaee",
 		"#55BF3B", "#DF5353", "#7798BF", "#aaeeee"],
 	chart: {
 		backgroundColor: '#1E1F21',
@@ -16,14 +16,14 @@ Highcharts.theme = {
 	},
 	title: {
 		style: {
-			color: '#FFF',
-			font: '26px inherited'
+			color: '#E5E5E5',
+			font: '28px inherited'
 		}
 	},
 	subtitle: {
 		style: {
-			color: '#DDD',
-			font: '12px inherited'
+			color: '#ADADAD',
+			font: '16px inherited'
 		}
 	},
 	xAxis: {
