@@ -431,7 +431,8 @@ function showChart(data) {
 			offset: 95,
 			labels: {
 				format: "{value:." + Math.max(decimals - 1, 0) + "f} " + unit
-			}
+			},
+			crosshair: true
 		},
 		tooltip: {
 			pointFormat: "<span style=\"color:{series.color}\">\u25CF</span> {point.y:." + decimals + "f} {series.name}<br>",
