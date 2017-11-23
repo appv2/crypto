@@ -251,14 +251,19 @@ function updateChart() {
 	updateHref();
 	var start = Math.round((new Date().getTime() / 1000) - ranges[range] * 24 * 60 * 60);
 	var period; // number of seconds
-	if(ranges[range] <= 7) {
-	  period = 60*15; // 15 minutes
+	
+	if(ranges[range] <= 3) {
+	  period = 60*5; // 5 minutes
 	  avgPeriod = 24;
-	  avgPeriodStr = "6h";
+	  avgPeriodStr = "6h";			
+	} else if(ranges[range] <= 7) {
+	  period = 60*15; // 15 minutes
+	  avgPeriod = 48;
+	  avgPeriodStr = "12h";
 	} else if(ranges[range] <= 14) {
 	  period = 60*30; // 30 minutes
-	  avgPeriod = 24;
-	  avgPeriodStr = "12h";
+	  avgPeriod = 48;
+	  avgPeriodStr = "24h";
 	} else if(ranges[range] <= 50) {
 	  period = 60*60*2; // 2 hours
 	  avgPeriod = 24;
