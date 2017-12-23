@@ -3,7 +3,7 @@
 
 JavaScript chart showing the price of different cryptocurrencies.
 
-Data provider: https://poloniex.com
+Data provider: https://poloniex.com, https://coinmarketcap.com
 
 Chart library: https://www.highcharts.com
 
