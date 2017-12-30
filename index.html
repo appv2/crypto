@@ -558,7 +558,7 @@ function showChartMarketShare() {
 		if(found)
 			chart.addSeries(series);
 		else {
-			for(var j in marketShareData[i]) {
+			for(var j in marketShareData[key]) {
 				if(otherSeries.data[j] == undefined)
 					otherSeries.data[j] = marketShareData[key][j];
 				else
