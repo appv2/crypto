@@ -81,7 +81,7 @@
 	}
 	#average-button.active {
 		color: #5494D3;
-		border-color: #5494D3;		
+		border-color: #5494D3;
 	}
 	.help-button {
 		margin-left: 35px;
@@ -142,25 +142,23 @@
 			<p>Repository: <a href="https://github.com/trustable-code/cryptocurrency-price-chart" target="_blank">https://github.com/trustable-code/cryptocurrency-price-chart</a></p>
 			<p>Data provider: <a href="https://poloniex.com" target="_blank">https://poloniex.com</a>, <a href="https://coinmarketcap.com" target="_blank">https://coinmarketcap.com</a></p>
 			<p>Chart library: <a href="https://www.highcharts.com" target="_blank">https://www.highcharts.com</a></p>
-			<p>Note: Market cap calculation is based on latest supply. <br>
-			It covers only the currencies which are available on Poloniex as USDT pair.</p>
 		</div>
 </body>
 
 <script>
 var currencies = {
 	"USDT": {"shortName": "$", "longName": "Tether Dollar", "showChartButton": false},
-	"BTC": {"shortName": "BTC", "longName": "Bitcoin Core", "showChartButton": true, "compareTo": ["USDT"], "color": "#F4911F"},
-	"ETH": {"shortName": "ETH", "longName": "Ethereum", "showChartButton": true, "compareTo": ["USDT", "BTC"], "color": "#7B7B7B"},
-	"BCH": {"shortName": "BCH", "longName": "Bitcoin Cash", "showChartButton": true, "compareTo": ["USDT", "BTC"], "color": "#4CC947"},
-	"XRP": {"shortName": "XRP", "longName": "Ripple", "showChartButton": false, "color": "#102B3E"},
-	"LTC": {"shortName": "LTC", "longName": "Litecoin", "showChartButton": true, "compareTo": ["USDT", "BTC", "XMR"], "color": "#88CBF5"},
-	//~ "ADA": {"shortName": "ADA", "longName": "Cardano", "showChartButton": false, "color": "#0A1C2A"}, // not available on Poloniex
-	//~ "IOTA": {"shortName": "IOTA", "longName": "IOTA", "showChartButton": false, "color": "#041816"}, // not available on Poloniex
-	"DASH": {"shortName": "DASH", "longName": "Dash", "showChartButton": true, "compareTo": ["USDT", "BTC", "XMR"], "color": "#1C75BC"},
-	//~ "XEM": {"shortName": "XEM", "longName": "NEM", "showChartButton": false, "color": "#211F33"}, // not available on Poloniex
-	"XMR": {"shortName": "XMR", "longName": "Monero", "showChartButton": true, "compareTo": ["USDT", "BTC"], "color": "#E05600"},
-	"ETC": {"shortName": "ETC", "longName": "Ethereum Classic", "showChartButton": true, "compareTo": ["USDT", "BTC", "ETH"], "color": "#669073"}
+	"BTC": {"shortName": "BTC", "longName": "Bitcoin Core", "marketCapKey": "bitcoin", "showChartButton": true, "compareTo": ["USDT"], "color": "#F4911F"},
+	"ETH": {"shortName": "ETH", "longName": "Ethereum", "marketCapKey": "ethereum", "showChartButton": true, "compareTo": ["USDT", "BTC"], "color": "#6187A6"},
+	"BCH": {"shortName": "BCH", "longName": "Bitcoin Cash", "marketCapKey": "bitcoin-cash", "showChartButton": true, "compareTo": ["USDT", "BTC"], "color": "#4CC947"},
+	"XRP": {"shortName": "XRP", "longName": "Ripple", "marketCapKey": "ripple", "showChartButton": false, "color": "#102B3E"},
+	"LTC": {"shortName": "LTC", "longName": "Litecoin", "marketCapKey": "litecoin", "showChartButton": true, "compareTo": ["USDT", "BTC", "XMR"], "color": "#88CBF5"},
+	"ADA": {"shortName": "ADA", "longName": "Cardano", "marketCapKey": "", "showChartButton": false, "color": "#0A1C2A"}, // price not available on Poloniex
+	"IOTA": {"shortName": "IOTA", "longName": "IOTA", "marketCapKey": "iota", "showChartButton": false, "color": "#041816"}, // price not available on Poloniex
+	"DASH": {"shortName": "DASH", "longName": "Dash", "marketCapKey": "dash", "showChartButton": true, "compareTo": ["USDT", "BTC", "XMR"], "color": "#1C75BC"},
+	"XEM": {"shortName": "XEM", "longName": "NEM", "marketCapKey": "nem", "showChartButton": false, "color": "#05CCBB"}, // price not available on Poloniex
+	"XMR": {"shortName": "XMR", "longName": "Monero", "marketCapKey": "monero", "showChartButton": true, "compareTo": ["USDT", "BTC"], "color": "#E05600"},
+	"ETC": {"shortName": "ETC", "longName": "Ethereum Classic", "marketCapKey": "", "showChartButton": true, "compareTo": ["USDT", "BTC", "ETH"], "color": "#669073"}
 };
 var ranges = {
 	"2d": 2,
@@ -183,10 +181,10 @@ var showAverage = false;
 var avgPeriod;
 var avgPeriodStr;
 var period; // number of seconds
-var pairsToLoad = [];
 var startTimestamp;
-var pairsData = {};
-var marketCapData = {};
+var priceData = {};
+var marketShareData = {};
+var totalMarketCapData = {};
 
 addChartSelectionButton("marketshare", "Market Share");
 
@@ -252,7 +250,7 @@ function updateChart() {
 	}
 	if(!(range in ranges))
 		range = defaultRange;
-	document.getElementById(range).classList.add("active");	
+	document.getElementById(range).classList.add("active");
 	if(currChart == "")
 		document.getElementById("average-button").style.display = "none";
 	else {
@@ -266,24 +264,11 @@ function updateChart() {
 	document.getElementById("loading").style.display = "block";
 	window.location.href = genHash(currChart, currRel, range, showAverage);
 	updateHref();
-	if(currChart == "") {
-		if(ranges[range] <= 3)
-				period = 60*30; // 30 minutes			
-		else if(ranges[range] <= 7)
-			period = 60*60*2; // 2 hours
-		else if(ranges[range] <= 14)
-			period = 60*60*4; // 4 hours
-		else if(ranges[range] <= 50)
-			period = 60*60*4; // 4 hours
-		else if(ranges[range] <= 100)
-			period = 60*60*4; // 4 hours
-		else
-			period = 60*60*24; // 1 day
-	} else {
+	if(currChart != "") {
 		if(ranges[range] <= 3) {
 			period = 60*5; // 5 minutes
 			avgPeriod = 24;
-			avgPeriodStr = "6h";			
+			avgPeriodStr = "6h";
 		} else if(ranges[range] <= 7) {
 			period = 60*15; // 15 minutes
 			avgPeriod = 48;
@@ -312,23 +297,14 @@ function updateChart() {
 	}
 	setUseUtc(period >= 60*60*24);
 	startTimestamp = Math.round((new Date().getTime() / 1000) - ranges[range] * 24 * 60 * 60);
-	if(currChart == "") {
-		pairsToLoad = [];
-		for(var cur in currencies) {
-			if(cur != "USDT")
-				pairsToLoad.unshift("USDT_" + cur);
-		}
-		loadMarketCapData();
-	} else {
-		currPair = currRel + "_" + currChart;
-		pairsToLoad = [currPair];
-		loadPriceDataIteration();
-	}
+	if(currChart == "")
+		loadMarketShareData();
+	else
+		loadPriceData();
 }
 
-function loadPriceDataIteration() {
-	var pair = pairsToLoad.pop();
-	var url = "https://poloniex.com/public?command=returnChartData&currencyPair=" + pair + "&start=" + startTimestamp + "&end=9999999999&period=" + period;
+function loadPriceData() {
+	var url = "https://poloniex.com/public?command=returnChartData&currencyPair=" + currRel + "_" + currChart + "&start=" + startTimestamp + "&end=9999999999999999&period=" + period;
 	$.ajax(url).done(function(data) {
 		if(data["error"]) {
 			document.getElementById("ChartContainer").innerHTML = "<div class=\"error\">" + data["error"] + "</div>";
@@ -336,21 +312,27 @@ function loadPriceDataIteration() {
 			document.title = baseTite;
 			return;
 		}
-		pairsData[pair] = data;
-		if(pairsToLoad.length == 0)
-			showChart();
-		else
-			loadPriceDataIteration();
-	});	
+		priceData = data;
+		showChart();
+	});
 }
 
-function loadMarketCapData() {
-	var url = "https://api.coinmarketcap.com/v1/ticker/?limit=100";
-	// Note: 100 currencies convered 98 % of the market cap on December 2017. This is good enough.
+function loadMarketShareData() {
+	var endTimestamp = new Date().getTime();
+	var url = "https://nexunity.org/tools/bypass-sop/?url=https://graphs.coinmarketcap.com/global/dominance/" + (startTimestamp * 1000) + "/" + endTimestamp + "/";
+	// We have to bypass the Same Origin Policy.
 	$.ajax(url).done(function(data) {
-		marketCapData = data;
-		loadPriceDataIteration();
-	});		
+		marketShareData = data;
+		loadTotalMarketCapData();
+	});
+}
+
+function loadTotalMarketCapData() {
+	var url = "https://api.coinmarketcap.com/v1/global/";
+	$.ajax(url).done(function(data) {
+		totalMarketCapData = data;
+		showChart();
+	});
 }
 
 function genHash(cur, currRel, ran, showAverage) {
@@ -405,13 +387,13 @@ function calculateAverage(rows, period) {
 			if(j > 0) {
 				val = val + rows[j][1];
 				count++;
-			}			
+			}
 		}
 		for(var j = i + Math.round(period/2); j > i; j--) {
 			if(j < rows.length) {
 				val = val + rows[j][1];
 				count++;
-			}			
+			}
 		}
 		val = val / count;
 		avgRows.push([key, val]);
@@ -448,7 +430,7 @@ function showChart() {
 		showChartMarketShare();
 	else
 		showChartCurrency();
-		
+
 	document.getElementById("loading").style.display = "none";
 }
 
@@ -468,7 +450,7 @@ function getBaseChartData() {
 		xAxisFormat = "{value:%b %e}";
 	else
 		xAxisFormat = "{value:%Y %b}";
-			
+
 	var chartData = {
 		chart: {
 			renderTo: "ChartContainer",
@@ -524,8 +506,8 @@ function getBaseChartData() {
 		chartData.tooltip.xDateFormat = "%a, %Y-%m-%d %H:%M";
 	else
 		chartData.tooltip.xDateFormat = "%a, %Y-%m-%d";
-	
-	return chartData;	
+
+	return chartData;
 }
 
 function showChartMarketShare() {
@@ -538,60 +520,53 @@ function showChartMarketShare() {
 	chartData.legend.enabled = true;
 	chartData.title.text = "Market Share";
 	document.title = chartData.title.text + " – " + baseTite;
-	
-	var totalMarketCap = 0;
-	for(var i in marketCapData) {
-		totalMarketCap = totalMarketCap + marketCapData[i].available_supply * marketCapData[i].price_usd;
-	}	
-	var coveredMarketCap = 0;
-	for(var pair in pairsData) {
-		var data = pairsData[pair];
-		coveredMarketCap = coveredMarketCap + data[data.length - 1].close * getSupply(pair);
-	}
-	chartData.subtitle.text = "Total market capitalization: " + formatFloat(totalMarketCap / 1000 / 1000 / 1000, 0) + " G$, chart covers " + formatFloat(coveredMarketCap / totalMarketCap * 100, 0) + " %";
-	
+	chartData.subtitle.text = "Total market capitalization: " + formatFloat(totalMarketCapData.total_market_cap_usd / 1000 / 1000 / 1000, 0) + " G$";
+
 	var chart = new Highcharts.StockChart(chartData);
-	
-	// Calculate market share for each currency:
-	var totalMarketCap = {};
-	for(var pair in pairsData) {
-		var data = pairsData[pair];
-		var supply = getSupply(pair);
-		for(var i in data) {
-			var date = data[i]["date"];
-			if(totalMarketCap[date] == undefined)
-				totalMarketCap[date] = 0;
-			totalMarketCap[date] = totalMarketCap[date] + data[i].weightedAverage * supply;
-		}
+	var otherSeries = {
+		name: "Other",
+		data: [],
+		color: "#444444"
 	}
-
-	for(var pair in pairsData) {
-		var a = pair.split("_");
-		var curr = a[1];
+	var keys = [];
+	for(var i in marketShareData) {
+		keys.push([i, marketShareData[i][marketShareData[i].length - 1][1]])
+	}
+	keys.sort(function(a, b) {
+		if(a[1] > b[1]) 
+			return -1;
+		if(a[1] < b[1]) 
+			return 1;
+		return 0;
+	});
+	for(var i in keys) {
+		var key = keys[i][0];
 		var series = {
-			name: curr,
-			data: [],
-			color: currencies[curr].color
-		}		
-		var data = pairsData[pair];
-		var supply = getSupply(pair);
-		for(var i in data) {
-			var date = data[i]["date"];
-			series.data.push([date * 1000, data[i].weightedAverage * supply / totalMarketCap[date] * 100]);
+			name: "",
+			data: marketShareData[key],
+			color: ""
 		}
-		chart.addSeries(series);
+		var found = false;
+		for(var curr in currencies) {
+			if(currencies[curr].marketCapKey == key) {
+				found = true;
+				series.name = currencies[curr].shortName;
+				series.color = currencies[curr].color;
+				break;
+			}
+		}
+		if(found)
+			chart.addSeries(series);
+		else {
+			for(var j in marketShareData[i]) {
+				if(otherSeries.data[j] == undefined)
+					otherSeries.data[j] = marketShareData[key][j];
+				else
+					otherSeries.data[j][1] = otherSeries.data[j][1] + marketShareData[key][j][1];
+			}
+		}
 	}
-}
-
-function getSupply(pair) {
-	var a = pair.split("_");
-	var curr = a[1];
-	for(var i in marketCapData) {
-		if(marketCapData[i].symbol == curr)
-			return marketCapData[i].available_supply;
-	}
-	console.log("Error: No market cap data available for currency " + curr);
-	return 0;
+	chart.addSeries(otherSeries);
 }
 
 function showChartCurrency() {
@@ -602,26 +577,26 @@ function showChartCurrency() {
 		name: unit,
 		data: []
 	}
-	var data = pairsData[currPair];
+	var data = priceData;
 	for(var i in data) {
 		series.data.push([data[i]["date"] * 1000, data[i].weightedAverage]);
 	}
-	
+
 	var decimals = getUserfulNumberOfDecimals(series.data);
 	var lastValue = data[data.length - 1]["close"];
 	var lastValueStr = "<span style=\"color:white;\">" + formatFloat(lastValue, decimals) + "</span> " + unit;
 	document.title = formatFloat(lastValue, decimals) + " " + unit + " – " + range + " – " + baseTite;
 	var chartData = getBaseChartData();
 	chartData.type = "line";
-	chartData.yAxis.type = "logarithmic";	
+	chartData.yAxis.type = "logarithmic";
 	chartData.yAxis.labels.format = "{value:." + Math.max(decimals - 1, 0) + "f} " + unit;
 	chartData.yAxis.offset = 80; // width in pixels
-	chartData.tooltip.pointFormat = "<span style=\"color:{series.color}\">\u25CF</span> {point.y:." + decimals + "f} {series.name}<br>";		
+	chartData.tooltip.pointFormat = "<span style=\"color:{series.color}\">\u25CF</span> {point.y:." + decimals + "f} {series.name}<br>";
 
 	chartData.title.text = currencies[currChart].longName;
 	if(currRel != "USDT")
 		chartData.title.text = chartData.title.text + " / " + currencies[currRel].longName;
-	
+
 	chartData.subtitle.text = "latest: " + lastValueStr;
 
 	// Add average series:
@@ -631,15 +606,15 @@ function showChartCurrency() {
 			name: unit + " (" + avgPeriodStr + " average)",
 			data: calculateAverage(series.data, avgPeriod),
 			lineWidth: 1.5
-		}		
+		}
 		var avgLastValue = avgSeries.data[avgSeries.data.length - 1][1];
 		var avgLastValueStr = "<span style=\"color:white;\">" + formatFloat(avgLastValue, decimals) + "</span> " + unit;
 		chartData.subtitle.text = avgPeriodStr + " average: " + avgLastValueStr + " | " + chartData.subtitle.text;
-	}	
-	
+	}
+
 	var chart = new Highcharts.StockChart(chartData);
 	chart.addSeries(series);
-	if(showAverage)	
+	if(showAverage)
 		chart.addSeries(avgSeries);
 }
 
@@ -667,7 +642,7 @@ function addChartSelectionButton(id, title) {
 	var el = document.createElement("A");
 	el.id = id;
 	el.innerHTML = title;
-	document.getElementById("chart-selection").appendChild(el);	
+	document.getElementById("chart-selection").appendChild(el);
 }
 
 </script>
