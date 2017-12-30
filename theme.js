@@ -12,18 +12,21 @@ Highcharts.theme = {
 		borderRadius: 0,
 		plotBackgroundColor: null,
 		plotShadow: false,
-		plotBorderWidth: 0
+		plotBorderWidth: 0,
+		style: {
+			fontFamily: "Noto Sans, Segoe UI, Helvetica, sans-serif"
+		}
 	},
 	title: {
 		style: {
 			color: '#E5E5E5',
-			font: '28px inherited'
+			font: '28px Noto Sans, Segoe UI, Helvetica, sans-serif'
 		}
 	},
 	subtitle: {
 		style: {
 			color: '#ADADAD',
-			font: '16px inherited'
+			font: '16px Noto Sans, Segoe UI, Helvetica, sans-serif'
 		}
 	},
 	xAxis: {
