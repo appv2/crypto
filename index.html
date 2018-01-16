@@ -146,6 +146,7 @@
 
 <script>
 var currencies = {
+	"totalmarketcap": {"shortName": "Total Market Cap.", "longName": "Total Market Capitalization", "showChartButton": true, "compareTo": ["USDT"]},
 	"USDT": {"shortName": "$", "longName": "Tether Dollar", "showChartButton": false},
 	"BTC": {"shortName": "BTC", "longName": "Bitcoin Core", "marketCapKey": "bitcoin", "showChartButton": true, "compareTo": ["USDT"], "color": "#F4911F"},
 	"ETH": {"shortName": "ETH", "longName": "Ethereum", "marketCapKey": "ethereum", "showChartButton": true, "compareTo": ["USDT", "BTC"], "color": "#6187A6"},
@@ -298,6 +299,8 @@ function updateChart() {
 	startTimestamp = Math.round((new Date().getTime() / 1000) - ranges[range] * 24 * 60 * 60);
 	if(currChart == "")
 		loadMarketShareData();
+	else if(currChart == "totalmarketcap")
+		loadTotalMarketCapHistoryData();
 	else
 		loadPriceData();
 }
@@ -316,17 +319,27 @@ function loadPriceData() {
 	});
 }
 
+function loadTotalMarketCapHistoryData() {
+	var endTimestamp = new Date().getTime();
+	var url = "https://nexunity.org/tools/bypass-sop/?url=https://graphs.coinmarketcap.com/global/marketcap-total/" + (startTimestamp * 1000) + "/" + endTimestamp + "/";
+	// We have to bypass the Same Origin Policy.
+	$.ajax(url).done(function(data) {
+		priceData = data;
+		showChart();
+	});
+}
+
 function loadMarketShareData() {
 	var endTimestamp = new Date().getTime();
 	var url = "https://nexunity.org/tools/bypass-sop/?url=https://graphs.coinmarketcap.com/global/dominance/" + (startTimestamp * 1000) + "/" + endTimestamp + "/";
 	// We have to bypass the Same Origin Policy.
 	$.ajax(url).done(function(data) {
 		marketShareData = data;
-		loadTotalMarketCapData();
+		loadCurrentTotalMarketCapData();
 	});
 }
 
-function loadTotalMarketCapData() {
+function loadCurrentTotalMarketCapData() {
 	var url = "https://api.coinmarketcap.com/v1/global/";
 	$.ajax(url).done(function(data) {
 		totalMarketCapData = data;
@@ -515,7 +528,7 @@ function showChartMarketShare() {
 	chartData.legend.enabled = true;
 	chartData.title.text = "Market Share";
 	document.title = chartData.title.text + " – " + baseTite;
-	chartData.subtitle.text = "Total market capitalization: " + formatFloat(totalMarketCapData.total_market_cap_usd / 1000 / 1000 / 1000, 0) + " G$";
+	chartData.subtitle.text = "Total market capitalization: " + formatBigNumberWithUnit(totalMarketCapData.total_market_cap_usd, "$");
 
 	var chart = new Highcharts.StockChart(chartData);
 	var otherSeries = {
@@ -528,9 +541,9 @@ function showChartMarketShare() {
 		keys.push([i, marketShareData[i][marketShareData[i].length - 1][1]])
 	}
 	keys.sort(function(a, b) {
-		if(a[1] > b[1]) 
+		if(a[1] > b[1])
 			return -1;
-		if(a[1] < b[1]) 
+		if(a[1] < b[1])
 			return 1;
 		return 0;
 	});
@@ -565,26 +578,41 @@ function showChartMarketShare() {
 }
 
 function showChartCurrency() {
-	var unit = currencies[currRel].shortName + "/" + currencies[currChart].shortName;
-
 	// prepare data:
 	var series = {
-		name: unit,
+		name: "",
 		data: []
 	}
-	var data = priceData;
-	for(var i in data) {
-		series.data.push([data[i]["date"] * 1000, data[i].weightedAverage]);
+
+	var docTitleFirstPart;
+	var lastValueStr;
+	var decimals;
+	if(currChart == "totalmarketcap") {
+		series.name = currencies[currRel].shortName;
+		priceData = priceData.market_cap_by_available_supply;
+		for(var i in priceData) {
+			series.data.push([priceData[i][0], priceData[i][1]]);
+		}
+		decimals = getUserfulNumberOfDecimals(series.data);
+		var lastValue = priceData[priceData.length - 1][1];
+		lastValueStr = formatBigNumberWithUnit(lastValue, series.name);
+		docTitleFirstPart = currencies[currChart].shortName;
+	} else {
+		series.name = currencies[currRel].shortName + "/" + currencies[currChart].shortName;
+		for(var i in priceData) {
+			series.data.push([priceData[i]["date"] * 1000, priceData[i].weightedAverage]);
+		}
+		decimals = getUserfulNumberOfDecimals(series.data);
+		var lastValue = priceData[priceData.length - 1]["close"];
+		lastValueStr = formatBigNumberWithUnit(lastValue, series.name);
+		docTitleFirstPart = lastValueStr;
 	}
 
-	var decimals = getUserfulNumberOfDecimals(series.data);
-	var lastValue = data[data.length - 1]["close"];
-	var lastValueStr = "<span style=\"color:white;\">" + formatFloat(lastValue, decimals) + "</span> " + unit;
-	document.title = formatFloat(lastValue, decimals) + " " + unit + " – " + range + " – " + baseTite;
+	document.title = docTitleFirstPart + " – " + range + " – " + baseTite;
 	var chartData = getBaseChartData();
 	chartData.type = "line";
 	chartData.yAxis.type = "logarithmic";
-	chartData.yAxis.labels.format = "{value:." + Math.max(decimals - 1, 0) + "f} " + unit;
+	chartData.yAxis.labels.format = "{value:." + Math.max(decimals - 1, 0) + "f} " + series.name;
 	chartData.yAxis.offset = 80; // width in pixels
 	chartData.tooltip.pointFormat = "<span style=\"color:{series.color}\">\u25CF</span> {point.y:." + decimals + "f} {series.name}<br>";
 
@@ -592,18 +620,18 @@ function showChartCurrency() {
 	if(currRel != "USDT")
 		chartData.title.text = chartData.title.text + " / " + currencies[currRel].longName;
 
-	chartData.subtitle.text = "latest: " + lastValueStr;
+	chartData.subtitle.text = "latest: " + "<span style=\"color:white;\">" + lastValueStr + "</span>";
 
 	// Add average series:
 	var avgSeries;
 	if(showAverage) {
 		avgSeries = {
-			name: unit + " (" + avgPeriodStr + " average)",
+			name: series.name + " (" + avgPeriodStr + " average)",
 			data: calculateAverage(series.data, avgPeriod),
 			lineWidth: 1.5
 		}
 		var avgLastValue = avgSeries.data[avgSeries.data.length - 1][1];
-		var avgLastValueStr = "<span style=\"color:white;\">" + formatFloat(avgLastValue, decimals) + "</span> " + unit;
+		var avgLastValueStr = "<span style=\"color:white;\">" + formatBigNumberWithUnit(avgLastValue, series.name) + "</span>";
 		chartData.subtitle.text = avgPeriodStr + " average: " + avgLastValueStr + " | " + chartData.subtitle.text;
 	}
 
@@ -631,6 +659,32 @@ function getURLParamValue(name) {
 function formatFloat(value, decimals) {
 	var f = Math.pow(10, decimals);
 	return Math.round(value * f) / f;
+}
+
+function formatBigNumberWithUnit(value, unit) {
+	if(value < 500) {
+		var temp = value;
+		var decimals = 0;
+		while(temp < 50) {
+			temp = temp * 10;
+			decimals++;
+		}
+		return formatFloat(value, decimals) + " " + unit;
+	}
+	var n = 0;
+	while(value >= 100000 && n < 4) {
+		value = value / 1000;
+		n++;
+	}
+	if(n == 0)
+		return formatFloat(value, 0) + " " + unit;
+	if(n == 1)
+		return formatFloat(value, 0) + " k" + unit;
+	if(n == 2)
+		return formatFloat(value, 0) + " M" + unit;
+	if(n == 3)
+		return formatFloat(value, 0) + " G" + unit;
+	return formatFloat(value, 0) + " T" + unit;
 }
 
 function addChartSelectionButton(id, title) {
