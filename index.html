@@ -309,9 +309,7 @@ function loadPriceData() {
 	var url = "https://poloniex.com/public?command=returnChartData&currencyPair=" + currRel + "_" + currChart + "&start=" + startTimestamp + "&end=9999999999999999&period=" + period;
 	$.ajax(url).done(function(data) {
 		if(data["error"]) {
-			document.getElementById("ChartContainer").innerHTML = "<div class=\"error\">" + data["error"] + "</div>";
-			document.getElementById("loading").style.display = "none";
-			document.title = baseTite;
+			showError(data["error"]);
 			return;
 		}
 		priceData = data;
@@ -321,9 +319,13 @@ function loadPriceData() {
 
 function loadTotalMarketCapHistoryData() {
 	var endTimestamp = new Date().getTime();
-	var url = "https://nexunity.org/tools/bypass-sop/?url=https://graphs.coinmarketcap.com/global/marketcap-total/" + (startTimestamp * 1000) + "/" + endTimestamp + "/";
+	var url = "https://nexunity.org/tools/bypass-sop/?url=https://graphs2.coinmarketcap.com/global/marketcap-total/" + (startTimestamp * 1000) + "/" + endTimestamp + "/";
 	// We have to bypass the Same Origin Policy.
 	$.ajax(url).done(function(data) {
+		if(data["error"]) {
+			showError(data["error"]);
+			return;
+		}
 		priceData = data;
 		showChart();
 	});
@@ -331,9 +333,13 @@ function loadTotalMarketCapHistoryData() {
 
 function loadMarketShareData() {
 	var endTimestamp = new Date().getTime();
-	var url = "https://nexunity.org/tools/bypass-sop/?url=https://graphs.coinmarketcap.com/global/dominance/" + (startTimestamp * 1000) + "/" + endTimestamp + "/";
+	var url = "https://nexunity.org/tools/bypass-sop/?url=https://graphs2.coinmarketcap.com/global/dominance/" + (startTimestamp * 1000) + "/" + endTimestamp + "/";
 	// We have to bypass the Same Origin Policy.
 	$.ajax(url).done(function(data) {
+		if(data["error"]) {
+			showError(data["error"]);
+			return;
+		}
 		marketShareData = data;
 		loadCurrentTotalMarketCapData();
 	});
@@ -345,6 +351,12 @@ function loadCurrentTotalMarketCapData() {
 		totalMarketCapData = data;
 		showChart();
 	});
+}
+
+function showError(errorMsg) {
+	document.getElementById("ChartContainer").innerHTML = "<div class=\"error\">Could not load data.<br>" + errorMsg + "</div>";
+	document.getElementById("loading").style.display = "none";
+	document.title = baseTite;	
 }
 
 function genHash(cur, currRel, ran, showAverage) {
