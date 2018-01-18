@@ -214,6 +214,7 @@ window.onhashchange = function() {
 updateChart();
 
 function updateChart() {
+	document.title = "(...) " + baseTite;
 	if(currChart == "")
 		document.getElementById("marketshare").classList.remove("active");
 	else
@@ -608,7 +609,7 @@ function showChartCurrency() {
 		decimals = getUserfulNumberOfDecimals(series.data);
 		var lastValue = priceData[priceData.length - 1][1];
 		lastValueStr = formatBigNumberWithUnit(lastValue, series.name);
-		docTitleFirstPart = currencies[currChart].shortName;
+		docTitleFirstPart = lastValueStr + " " + currencies[currChart].shortName;
 	} else {
 		series.name = currencies[currRel].shortName + "/" + currencies[currChart].shortName;
 		for(var i in priceData) {
@@ -620,7 +621,7 @@ function showChartCurrency() {
 		docTitleFirstPart = lastValueStr;
 	}
 
-	document.title = docTitleFirstPart + " – " + range + " – " + baseTite;
+	document.title = docTitleFirstPart + " – " + baseTite;
 	var chartData = getBaseChartData();
 	chartData.type = "line";
 	chartData.yAxis.type = "logarithmic";
