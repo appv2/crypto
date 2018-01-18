@@ -184,7 +184,6 @@ var period; // number of seconds
 var startTimestamp;
 var priceData = {};
 var marketShareData = {};
-var totalMarketCapData = {};
 
 addChartSelectionButton("marketshare", "Market Share");
 
@@ -342,14 +341,6 @@ function loadMarketShareData() {
 			return;
 		}
 		marketShareData = data;
-		loadCurrentTotalMarketCapData();
-	});
-}
-
-function loadCurrentTotalMarketCapData() {
-	var url = "https://api.coinmarketcap.com/v1/global/";
-	$.ajax(url).done(function(data) {
-		totalMarketCapData = data;
 		showChart();
 	});
 }
@@ -532,23 +523,6 @@ function getBaseChartData() {
 }
 
 function showChartMarketShare() {
-	var chartData = getBaseChartData();
-	chartData.chart.type = "area";
-	chartData.plotOptions.area.stacking = "percent";
-	chartData.yAxis.labels.format = "{value:.0f} %";
-	chartData.yAxis.offset = 35; // width in pixels
-	chartData.tooltip.pointFormat = "<span style=\"color:{series.color}\">\u25CF</span>{series.name}: {point.y:.1f} %<br>";
-	chartData.legend.enabled = true;
-	chartData.title.text = "Market Share";
-	document.title = chartData.title.text + " – " + baseTite;
-	chartData.subtitle.text = "Total market capitalization: " + formatBigNumberWithUnit(totalMarketCapData.total_market_cap_usd, "$");
-
-	var chart = new Highcharts.StockChart(chartData);
-	var otherSeries = {
-		name: "Other",
-		data: [],
-		color: "#444444"
-	}
 	var keys = [];
 	for(var i in marketShareData) {
 		keys.push([i, marketShareData[i][marketShareData[i].length - 1][1]])
@@ -560,25 +534,61 @@ function showChartMarketShare() {
 			return 1;
 		return 0;
 	});
+	
+	var chartData = getBaseChartData();
+	chartData.chart.type = "area";
+	chartData.plotOptions.area.stacking = "percent";
+	chartData.yAxis.labels.format = "{value:.0f} %";
+	chartData.yAxis.offset = 35; // width in pixels
+	chartData.tooltip.pointFormat = "<span style=\"color:{series.color}\">\u25CF</span>{series.name}: {point.y:.1f} %<br>";
+	chartData.legend.enabled = true;
+	chartData.title.text = "Market Share";
+	document.title = chartData.title.text + " – " + baseTite;
+	chartData.subtitle.text = "";
+	
+	var count = 0;
 	for(var i in keys) {
 		var key = keys[i][0];
-		var series = {
-			name: "",
-			data: marketShareData[key],
-			color: ""
+		if(key == "others")
+			continue;
+		var shortName = key;
+		for(var curr in currencies) {
+			if(currencies[curr].marketCapKey == key) {
+				shortName = currencies[curr].shortName;
+				break;
+			}
 		}
+		if(chartData.subtitle.text != "")
+			chartData.subtitle.text = chartData.subtitle.text + " | ";
+		var value = marketShareData[key][marketShareData[key].length - 1][1];
+		chartData.subtitle.text = chartData.subtitle.text + shortName + ": <span style=\"color:white;\">" + formatFloat(value, 1) + "</span> %";
+		count++;
+		if(count == 3)
+			break;
+	}	
+	
+	var chart = new Highcharts.StockChart(chartData);
+	var otherSeries = {
+		name: "Other",
+		data: [],
+		color: "#444444"
+	}
+	for(var i in keys) {
+		var key = keys[i][0];
 		var found = false;
 		for(var curr in currencies) {
 			if(currencies[curr].marketCapKey == key) {
 				found = true;
-				series.name = currencies[curr].shortName;
-				series.color = currencies[curr].color;
+				var series = {
+					name: currencies[curr].shortName,
+					data: marketShareData[key],
+					color: currencies[curr].color
+				}				
+				chart.addSeries(series);
 				break;
 			}
 		}
-		if(found)
-			chart.addSeries(series);
-		else {
+		if(!found) {
 			for(var j in marketShareData[key]) {
 				if(otherSeries.data[j] == undefined)
 					otherSeries.data[j] = marketShareData[key][j];
