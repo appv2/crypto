@@ -19,13 +19,13 @@ Highcharts.theme = {
 	},
 	title: {
 		style: {
-			color: '#3A3A3A',
+			color: '#3D3D3D',
 			font: '28px Noto Sans, Segoe UI, Helvetica, sans-serif'
 		}
 	},
 	subtitle: {
 		style: {
-			color: '#3A3A3A',
+			color: '#3D3D3D',
 			font: '16px Noto Sans, Segoe UI, Helvetica, sans-serif'
 		}
 	},
@@ -40,7 +40,7 @@ Highcharts.theme = {
 		},
 		title: {
 			style: {
-				color: '#AAA',
+				color: '#3D3D3D',
 				font: 'bold 12px inherited'
 			}
 		}
@@ -59,7 +59,7 @@ Highcharts.theme = {
 		},
 		title: {
 			style: {
-				color: '#636363',
+				color: '#3D3D3D',
 				font: '12px inherited'
 			}
 		}
@@ -240,7 +240,7 @@ Highcharts.theme = {
 	legendBackgroundColor: 'rgba(48, 48, 48, 0.8)',
 	background2: 'rgb(70, 70, 70)',
 	dataLabelsColor: '#444',
-	textColor: '#636363',
+	textColor: '#3D3D3D',
 	maskColor: 'rgba(255,255,255,0.3)'
 };
 
