@@ -19,13 +19,13 @@ Highcharts.theme = {
 	},
 	title: {
 		style: {
-			color: '#E5E5E5',
+			color: '#3A3A3A',
 			font: '28px Noto Sans, Segoe UI, Helvetica, sans-serif'
 		}
 	},
 	subtitle: {
 		style: {
-			color: '#ADADAD',
+			color: '#3A3A3A',
 			font: '16px Noto Sans, Segoe UI, Helvetica, sans-serif'
 		}
 	},
