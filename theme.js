@@ -59,7 +59,7 @@ Highcharts.theme = {
 		},
 		title: {
 			style: {
-				color: '#AAA',
+				color: '#636363',
 				font: '12px inherited'
 			}
 		}
@@ -77,7 +77,7 @@ Highcharts.theme = {
 	},
 	labels: {
 		style: {
-			color: '#CCC'
+			color: '#636363'
 		}
 	},
 	tooltip: {
@@ -85,7 +85,7 @@ Highcharts.theme = {
 		borderWidth: 0,
 		borderRadius: 10,
 		style: {
-			color: '#FFF',
+			color: '#636363',
 			fontSize: '14px'
 		}
 	},
@@ -240,7 +240,7 @@ Highcharts.theme = {
 	legendBackgroundColor: 'rgba(48, 48, 48, 0.8)',
 	background2: 'rgb(70, 70, 70)',
 	dataLabelsColor: '#444',
-	textColor: '#E0E0E0',
+	textColor: '#636363',
 	maskColor: 'rgba(255,255,255,0.3)'
 };
 
