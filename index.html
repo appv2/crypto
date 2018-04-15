@@ -16,7 +16,7 @@
 		text-align: center;
 	}
 	body, #about-inner {
-		background: #f2f2f2;
+		background: #1E1F21;
 	}
 	body, .buttons > a, .help-button {
 		color: #D6D6D6;
@@ -135,8 +135,12 @@
 	<div id="ChartContainer"></div>
 	<div id="about">
 		<div id="about-inner" onclick="showHelp(event);">
-			<h1>Buy Cryptocurrency</h1>
-			<p>Shop at <a href="https://buy.coin.fm</a>Coin.FM!</p>
+			<h1>Cryptocurrency Price Chart</h1>
+			<p>Original URL: <a href="https://trustable-code.github.io/cryptocurrency-price-chart/">https://trustable-code.github.io/cryptocurrency-price-chart/</a></p>
+			<p>Developer: <a href="https://github.com/trustable-code" target="_blank">Simon Krauter</a></p>
+			<p>Repository: <a href="https://github.com/trustable-code/cryptocurrency-price-chart" target="_blank">https://github.com/trustable-code/cryptocurrency-price-chart</a></p>
+			<p>Data provider: <a href="https://poloniex.com" target="_blank">https://poloniex.com</a>, <a href="https://coinmarketcap.com" target="_blank">https://coinmarketcap.com</a></p>
+			<p>Chart library: <a href="https://www.highcharts.com" target="_blank">https://www.highcharts.com</a></p>
 		</div>
 </body>
 
@@ -144,7 +148,7 @@
 var currencies = {
 	"totalmarketcap": {"shortName": "Total Market Cap.", "longName": "Total Market Capitalization", "showChartButton": true, "compareTo": ["USDT"]},
 	"USDT": {"shortName": "$", "longName": "Tether Dollar", "showChartButton": false},
-	"BTC": {"shortName": "BTC", "longName": "Bitcoin", "marketCapKey": "bitcoin", "showChartButton": true, "compareTo": ["USDT"], "color": "#F4911F"},
+	"BTC": {"shortName": "BTC", "longName": "Bitcoin Core", "marketCapKey": "bitcoin", "showChartButton": true, "compareTo": ["USDT"], "color": "#F4911F"},
 	"ETH": {"shortName": "ETH", "longName": "Ethereum", "marketCapKey": "ethereum", "showChartButton": true, "compareTo": ["USDT", "BTC"], "color": "#6187A6"},
 	"BCH": {"shortName": "BCH", "longName": "Bitcoin Cash", "marketCapKey": "bitcoin-cash", "showChartButton": true, "compareTo": ["USDT", "BTC"], "color": "#4CC947"},
 	"XRP": {"shortName": "XRP", "longName": "Ripple", "marketCapKey": "ripple", "showChartButton": false, "color": "#102B3E"},
