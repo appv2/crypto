@@ -7,7 +7,7 @@ Highcharts.theme = {
 	colors: ["#DDDF0D", "#5190CC", "#55BF3B", "#DF5353", "#aaeeee", "#ff0066", "#eeaaee",
 		"#55BF3B", "#DF5353", "#7798BF", "#aaeeee"],
 	chart: {
-		backgroundColor: '#f2f2f2',
+		backgroundColor: '#FFFFFF',
 		borderWidth: 0,
 		borderRadius: 0,
 		plotBackgroundColor: null,
@@ -25,7 +25,7 @@ Highcharts.theme = {
 	},
 	subtitle: {
 		style: {
-			color: '#3D3D3D',
+			color: '#FFFFFF',
 			font: '16px Noto Sans, Segoe UI, Helvetica, sans-serif'
 		}
 	},
@@ -85,7 +85,7 @@ Highcharts.theme = {
 		borderWidth: 0,
 		borderRadius: 10,
 		style: {
-			color: '#636363',
+			color: '#FFFFFF',
 			fontSize: '14px'
 		}
 	},
