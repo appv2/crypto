@@ -180,7 +180,7 @@ Highcharts.theme = {
 					},
 					stroke: '#000000',
 					style: {
-						color: 'yellow'
+						color: '#32c0dd'
 					}
 				}
 			}
